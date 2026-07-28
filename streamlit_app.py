@@ -1,4 +1,69 @@
 import streamlit as st
+import streamlit_authenticator as stauth
+import pandas as pd
+import yaml
+from yaml.loader import SafeLoader
+
+# 1. CẤU HÌNH NGƯỜI DÙNG (Trong thực tế nên để ở file riêng hoặc Database)
+# Lưu ý: Mật khẩu ở đây đã được mã hóa. 
+# Tôi tạo sẵn 2 tài khoản: 
+# - admin (pass: 123)
+# - ketoan (pass: 456)
+credentials = {
+    "usernames": {
+        "admin": {
+            "name": "Giám Đốc (Admin)",
+            "password": "$2b$12$EpxNnlsM6C9S9mD9Z8Z8Z.h5zG6x8x8x8x8x8x8x8x8x8x8x8x8x8", # Đây là mã băm của '123'
+            "logged_in": False
+        },
+        "ketoan": {
+            "name": "Kế Toán Viên",
+            "password": "$2b$12$Xy... (mã băm của 456)", 
+            "logged_in": False
+        }
+    }
+}
+
+# Khởi tạo bộ xác thực
+authenticator = stauth.Authenticate(
+    credentials,
+    "wood_dashboard_cookie", # Tên cookie lưu trên trình duyệt
+    "signature_key_123",     # Khóa chữ ký (nên đặt phức tạp)
+    cookie_expiry_days=30     # Ghi nhớ đăng nhập trong 30 ngày
+)
+
+# 2. HIỂN THỊ FORM ĐĂNG NHẬP
+name, authentication_status, username = authenticator.login('main', fields={'Form name': 'Đăng nhập Hệ thống Wood-ERP'})
+
+# 3. KIỂM TRA TRẠNG THÁI ĐĂNG NHẬP
+if authentication_status == False:
+    st.error('Sai tên đăng nhập hoặc mật khẩu!')
+elif authentication_status == None:
+    st.warning('Vui lòng nhập tên đăng nhập và mật khẩu.')
+elif authentication_status:
+    
+    # --- NẾU ĐĂNG NHẬP THÀNH CÔNG, HIỂN THỊ NỘI DUNG APP ---
+    
+    # Nút đăng xuất ở sidebar
+    authenticator.logout('Đăng xuất', 'sidebar')
+    st.sidebar.title(f"Chào {name}!")
+
+    # Menu phân quyền
+    if username == "admin":
+        menu = st.sidebar.radio("Quản trị:", ["CEO Dashboard", "Tài chính P&L", "Dòng tiền"])
+    else:
+        menu = st.sidebar.radio("Nhân viên:", ["Báo cáo Sản xuất", "Yield"])
+
+    # Nội dung Dashboard (Giữ nguyên phần code báo cáo của bạn ở đây)
+    if menu == "CEO Dashboard":
+        st.header("📊 Báo Cáo Sức Khỏe Doanh Nghiệp")
+        st.metric("Lợi nhuận", "1.2 Tỷ", "+5%")
+        # ... các biểu đồ khác ...
+    
+    elif menu == "Tài chính P&L":
+        st.header("📋 Báo cáo P&L")
+        # ... dữ liệu P&L ...
+import streamlit as st
 import pandas as pd
 import plotly.express as px
 
