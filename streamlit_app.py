@@ -3,8 +3,10 @@ import streamlit_authenticator as stauth
 import pandas as pd
 import plotly.express as px
 
-# 1. CẤU HÌNH NGƯỜI DÙNG
-# Lưu ý: Cấu trúc dictionary đã được thay đổi để khớp với bản mới
+# 1. CẤU HÌNH TRANG (Luôn ở đầu tiên)
+st.set_page_config(page_title="Hệ Thống Wood-ERP Bảo Mật", layout="wide")
+
+# 2. THÔNG TIN ĐĂNG NHẬP
 credentials = {
     "usernames": {
         "admin": {
@@ -12,57 +14,65 @@ credentials = {
             "password": "$2b$12$EpxNnlsM6C9S9mD9Z8Z8Z.h5zG6x8x8x8x8x8x8x8x8x8x8x8x8x8", # Pass: 123
         },
         "ketoan": {
-            "name": "Kế Toán Viên",
-            "password": "$2b$12$EpxNnlsM6C9S9mD9Z8Z8Z.h5zG6x8x8x8x8x8x8x8x8x8x8x8x8x8", # Pass: 456 (Thay mã băm thật vào đây)
+            "name": "Kế Toán",
+            "password": "$2b$12$EpxNnlsM6C9S9mD9Z8Z8Z.h5zG6x8x8x8x8x8x8x8x8x8x8x8x8x8", # Pass: 123
         }
     }
 }
 
 # Khởi tạo bộ xác thực
-# Ở bản mới, tham số truyền vào cần cụ thể hơn
 authenticator = stauth.Authenticate(
     credentials,
-    "wood_dashboard_cookie", # Tên cookie
-    "signature_key_123",     # Khóa chữ ký
+    "wood_dashboard_cookie",
+    "signature_key_123",
     cookie_expiry_days=30
 )
 
-# 2. HIỂN THỊ FORM ĐĂNG NHẬP
-# Ở bản mới, ta chỉ gọi hàm login(), không gán biến trả về
-authenticator.login()
+# 3. HIỂN THỊ FORM ĐĂNG NHẬP
+# Chúng ta để form này ở giữa màn hình khi chưa đăng nhập
+authenticator.login('main')
 
-# 3. KIỂM TRA TRẠNG THÁI QUA SESSION STATE
+# 4. KIỂM TRA TRẠNG THÁI (Đây là "Cánh cửa" bảo mật)
 if st.session_state["authentication_status"]:
-    # NẾU ĐĂNG NHẬP THÀNH CÔNG
+    # =========================================================
+    # TẤT CẢ NỘI DUNG DƯỚI ĐÂY CHỈ HIỆN KHI ĐÃ ĐĂNG NHẬP XONG
+    # =========================================================
+    
+    # Nút đăng xuất
     authenticator.logout('Đăng xuất', 'sidebar')
     
-    st.sidebar.title(f"Chào {st.session_state['name']}!")
-    
-    # Phân quyền dựa trên username
-    user_role = st.session_state['username']
-    
-    if user_role == "admin":
-        menu = st.sidebar.radio("Quản trị:", ["CEO Dashboard", "Tài chính P&L", "Dòng tiền"])
-    else:
-        menu = st.sidebar.radio("Nhân viên:", ["Báo cáo Yield", "Dòng tiền"])
+    # Sidebar menu
+    st.sidebar.title(f"Xin chào, {st.session_state['name']}")
+    menu = st.sidebar.radio("Phân hệ:", ["CEO Dashboard", "Báo cáo P&L", "Quản lý Dòng tiền"])
 
-    # --- NỘI DUNG APP (Mẫu) ---
     if menu == "CEO Dashboard":
-        st.header("📊 Dashboard Quản Trị")
-        st.metric("Doanh thu thực tế", "5.2 Tỷ", "+12%")
+        st.title("📊 Dashboard Quản Trị")
+        c1, c2 = st.columns(2)
+        c1.metric("Doanh thu thực tế", "5.2 Tỷ", "+12%")
+        c2.metric("Lợi nhuận", "1.4 Tỷ", "+5%")
         
-        # Biểu đồ mẫu
+        # Biểu đồ
         df = pd.DataFrame({'Tháng': ['T5', 'T6', 'T7'], 'Doanh thu': [4.8, 5.0, 5.2]})
-        st.plotly_chart(px.line(df, x='Tháng', y='Doanh thu'))
+        st.plotly_chart(px.line(df, x='Tháng', y='Doanh thu'), use_container_width=True)
 
-    elif menu == "Tài chính P&L":
-        st.header("📋 Báo cáo P&L Chi Tiết")
-        st.write("Dữ liệu tài chính hiển thị tại đây...")
+    elif menu == "Báo cáo P&L":
+        st.title("📋 Báo cáo Kết quả Kinh doanh")
+        st.table(pd.DataFrame({
+            "Chỉ tiêu": ["Doanh thu", "Giá vốn", "Lợi nhuận"],
+            "Số tiền": ["5,200,000,000", "3,400,000,000", "1,800,000,000"]
+        }))
+
+    elif menu == "Quản lý Dòng tiền":
+        st.title("💸 Quản lý Dòng tiền")
+        st.info("Dữ liệu dòng tiền chi tiết...")
 
 elif st.session_state["authentication_status"] is False:
-    st.error('Sai tên đăng nhập hoặc mật khẩu!')
+    st.error('Tên đăng nhập hoặc mật khẩu không đúng.')
+    
 elif st.session_state["authentication_status"] is None:
-    st.warning('Vui lòng nhập thông tin để vào hệ thống.')
+    # Trạng thái khi chưa nhập gì
+    st.markdown("<h2 style='text-align: center;'>Hệ Thống Báo Cáo Nội Bộ ABC Wood</h2>", unsafe_allow_html=True)
+    st.info("Vui lòng đăng nhập để xem báo cáo tài chính.")
 import streamlit as st
 import pandas as pd
 import plotly.express as px
