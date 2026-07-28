@@ -77,9 +77,61 @@ elif menu == "Báo cáo P&L chi tiết":
     })
     st.table(pl_table)
 
-else:
-    st.header("💸 Quản lý Dòng tiền (Cash Flow)")
-    st.write("Chức năng đang được cập nhật...")
+elif menu == "Quản lý Dòng tiền":
+    st.header("💸 Quản lý & Dự báo Dòng tiền (Cash Flow)")
+
+    # 1. Chỉ số dòng tiền tổng quát
+    c1, c2, c3 = st.columns(3)
+    cash_in = 4200000000  # 4.2 Tỷ
+    cash_out = 3100000000 # 3.1 Tỷ
+    c1.metric("Dòng tiền vào (Tháng này)", f"{cash_in:,.0f} VNĐ", "+5%")
+    c2.metric("Dòng tiền ra (Tháng này)", f"{cash_out:,.0f} VNĐ", "+12% (Do nhập gỗ)")
+    c3.metric("Số dư cuối kỳ dự kiến", f"{(cash_in - cash_out):,.0f} VNĐ", "Ổn định", delta_color="normal")
+
+    st.markdown("---")
+
+    # 2. Biểu đồ so sánh Thu - Chi theo tuần
+    st.subheader("📊 Biến động Thu - Chi theo tuần")
+    cash_flow_data = pd.DataFrame({
+        'Tuần': ['Tuần 1', 'Tuần 2', 'Tuần 3', 'Tuần 4'],
+        'Thu (Tiền hàng)': [1200, 800, 1500, 700],
+        'Chi (Nguyên liệu/Lương)': [900, 1100, 600, 500]
+    })
+    fig_cf = px.bar(cash_flow_data, x='Tuần', y=['Thu (Tiền hàng)', 'Chi (Nguyên liệu/Lương)'], 
+                    barmode='group', title="Đơn vị: Triệu VNĐ")
+    st.plotly_chart(fig_cf, use_container_width=True)
+
+    # 3. Quản lý Công nợ (Rất quan trọng trong ngành gỗ)
+    col_ar, col_ap = st.columns(2)
+    
+    with col_ar:
+        st.subheader("🚩 Công nợ phải thu (AR)")
+        ar_data = pd.DataFrame({
+            "Khách hàng": ["IKEA USA", "Ashley Furniture", "Lotte Mart"],
+            "Số tiền (Triệu)": [850, 1200, 450],
+            "Quá hạn": ["15 ngày", "0", "5 ngày"]
+        })
+        st.table(ar_data)
+        st.info("💡 Tip: Ưu tiên đòi nợ IKEA USA để bù đắp dòng tiền nhập gỗ tuần tới.")
+
+    with col_ap:
+        st.subheader("🚛 Công nợ phải trả (AP)")
+        ap_data = pd.DataFrame({
+            "Nhà cung cấp": ["Lâm trường Gia Lai", "Công ty Keo AB", "Điện lực (EVN)"],
+            "Số tiền (Triệu)": [1500, 200, 150],
+            "Hạn thanh toán": ["25/07", "30/07", "20/07"]
+        })
+        st.table(ap_data)
+
+    # 4. Dự báo dòng tiền 3 tháng tới
+    st.subheader("🔮 Dự báo số dư tiền mặt (3 tháng tới)")
+    forecast_data = pd.DataFrame({
+        "Tháng": ["Tháng 8", "Tháng 9", "Tháng 10"],
+        "Số dư dự kiến (Tỷ)": [1.1, 1.5, 0.8]
+    })
+    fig_forecast = px.area(forecast_data, x="Tháng", y="Số dư dự kiến (Tỷ)", color_discrete_sequence=['#2ecc71'])
+    st.plotly_chart(fig_forecast, use_container_width=True)
+    st.warning("⚠️ Chú ý: Dòng tiền tháng 10 dự kiến giảm mạnh do vào mùa cao điểm nhập kho gỗ tròn dự trữ cho tết.")
 
 # 5. THÔNG BÁO HỆ THỐNG
 st.sidebar.success("Trạng thái: Máy chủ đã kết nối")
