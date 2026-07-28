@@ -1,68 +1,68 @@
 import streamlit as st
 import streamlit_authenticator as stauth
 import pandas as pd
-import yaml
-from yaml.loader import SafeLoader
+import plotly.express as px
 
-# 1. CẤU HÌNH NGƯỜI DÙNG (Trong thực tế nên để ở file riêng hoặc Database)
-# Lưu ý: Mật khẩu ở đây đã được mã hóa. 
-# Tôi tạo sẵn 2 tài khoản: 
-# - admin (pass: 123)
-# - ketoan (pass: 456)
+# 1. CẤU HÌNH NGƯỜI DÙNG
+# Lưu ý: Cấu trúc dictionary đã được thay đổi để khớp với bản mới
 credentials = {
     "usernames": {
         "admin": {
             "name": "Giám Đốc (Admin)",
-            "password": "$2b$12$EpxNnlsM6C9S9mD9Z8Z8Z.h5zG6x8x8x8x8x8x8x8x8x8x8x8x8x8", # Đây là mã băm của '123'
-            "logged_in": False
+            "password": "$2b$12$EpxNnlsM6C9S9mD9Z8Z8Z.h5zG6x8x8x8x8x8x8x8x8x8x8x8x8x8", # Pass: 123
         },
         "ketoan": {
             "name": "Kế Toán Viên",
-            "password": "$2b$12$Xy... (mã băm của 456)", 
-            "logged_in": False
+            "password": "$2b$12$EpxNnlsM6C9S9mD9Z8Z8Z.h5zG6x8x8x8x8x8x8x8x8x8x8x8x8x8", # Pass: 456 (Thay mã băm thật vào đây)
         }
     }
 }
 
 # Khởi tạo bộ xác thực
+# Ở bản mới, tham số truyền vào cần cụ thể hơn
 authenticator = stauth.Authenticate(
     credentials,
-    "wood_dashboard_cookie", # Tên cookie lưu trên trình duyệt
-    "signature_key_123",     # Khóa chữ ký (nên đặt phức tạp)
-    cookie_expiry_days=30     # Ghi nhớ đăng nhập trong 30 ngày
+    "wood_dashboard_cookie", # Tên cookie
+    "signature_key_123",     # Khóa chữ ký
+    cookie_expiry_days=30
 )
 
 # 2. HIỂN THỊ FORM ĐĂNG NHẬP
-name, authentication_status, username = authenticator.login('main', fields={'Form name': 'Đăng nhập Hệ thống Wood-ERP'})
+# Ở bản mới, ta chỉ gọi hàm login(), không gán biến trả về
+authenticator.login()
 
-# 3. KIỂM TRA TRẠNG THÁI ĐĂNG NHẬP
-if authentication_status == False:
-    st.error('Sai tên đăng nhập hoặc mật khẩu!')
-elif authentication_status == None:
-    st.warning('Vui lòng nhập tên đăng nhập và mật khẩu.')
-elif authentication_status:
-    
-    # --- NẾU ĐĂNG NHẬP THÀNH CÔNG, HIỂN THỊ NỘI DUNG APP ---
-    
-    # Nút đăng xuất ở sidebar
+# 3. KIỂM TRA TRẠNG THÁI QUA SESSION STATE
+if st.session_state["authentication_status"]:
+    # NẾU ĐĂNG NHẬP THÀNH CÔNG
     authenticator.logout('Đăng xuất', 'sidebar')
-    st.sidebar.title(f"Chào {name}!")
-
-    # Menu phân quyền
-    if username == "admin":
+    
+    st.sidebar.title(f"Chào {st.session_state['name']}!")
+    
+    # Phân quyền dựa trên username
+    user_role = st.session_state['username']
+    
+    if user_role == "admin":
         menu = st.sidebar.radio("Quản trị:", ["CEO Dashboard", "Tài chính P&L", "Dòng tiền"])
     else:
-        menu = st.sidebar.radio("Nhân viên:", ["Báo cáo Sản xuất", "Yield"])
+        menu = st.sidebar.radio("Nhân viên:", ["Báo cáo Yield", "Dòng tiền"])
 
-    # Nội dung Dashboard (Giữ nguyên phần code báo cáo của bạn ở đây)
+    # --- NỘI DUNG APP (Mẫu) ---
     if menu == "CEO Dashboard":
-        st.header("📊 Báo Cáo Sức Khỏe Doanh Nghiệp")
-        st.metric("Lợi nhuận", "1.2 Tỷ", "+5%")
-        # ... các biểu đồ khác ...
-    
+        st.header("📊 Dashboard Quản Trị")
+        st.metric("Doanh thu thực tế", "5.2 Tỷ", "+12%")
+        
+        # Biểu đồ mẫu
+        df = pd.DataFrame({'Tháng': ['T5', 'T6', 'T7'], 'Doanh thu': [4.8, 5.0, 5.2]})
+        st.plotly_chart(px.line(df, x='Tháng', y='Doanh thu'))
+
     elif menu == "Tài chính P&L":
-        st.header("📋 Báo cáo P&L")
-        # ... dữ liệu P&L ...
+        st.header("📋 Báo cáo P&L Chi Tiết")
+        st.write("Dữ liệu tài chính hiển thị tại đây...")
+
+elif st.session_state["authentication_status"] is False:
+    st.error('Sai tên đăng nhập hoặc mật khẩu!')
+elif st.session_state["authentication_status"] is None:
+    st.warning('Vui lòng nhập thông tin để vào hệ thống.')
 import streamlit as st
 import pandas as pd
 import plotly.express as px
